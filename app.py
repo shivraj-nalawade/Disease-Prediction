@@ -331,21 +331,67 @@ with right:
     vals = {}
     if len(cont_cols) == 0:
         cont_cols = []
+
+    # realistic ranges (tweak if your data uses different units)
+    RANGES = {
+        # key (lowercased) : (min, max, default, step, format)
+        "age": (0.0, 120.0, 30.0, 1.0, "%.0f"),
+        "temperature (c)": (-50.0, 60.0, 37.0, 0.1, "%.2f"),
+        "temp": (-50.0, 60.0, 37.0, 0.1, "%.2f"),
+        "humidity": (0.0, 100.0, 50.0, 0.1, "%.2f"),
+        "wind speed (km/h)": (0.0, 300.0, 10.0, 0.1, "%.2f"),
+        "wind": (0.0, 300.0, 10.0, 0.1, "%.2f"),
+    }
+
+    # Create number inputs (one column per continuous feature)
     cols_ui = st.columns(max(1, len(cont_cols)))
     for i, c in enumerate(cont_cols):
+        lookup = c.lower()
+        # use defined range if present, else fallback
+        if lookup in RANGES:
+            lo, hi, default, step, fmt = RANGES[lookup]
+        else:
+            lo, hi, default, step, fmt = (0.0, 1e6, 0.0, 0.1, "%.2f")
+
         with cols_ui[i]:
-            vals[c] = st.number_input(c, value=0.0, format="%.2f", key=f"cont_{c}")
+            vals[c] = st.number_input(
+                label=c,
+                min_value=lo,
+                max_value=hi,
+                value=default if default is not None else 0.0,
+                step=step,
+                format=fmt,
+                key=f"cont_{c}"
+            )
 
     # Create input row
     if st.button("Predict", type="primary"):
         # build row
-        row = {c:0 for c in expected_cols}
-        for k,v in vals.items():
-            row[k] = v
+        row = {c: 0 for c in expected_cols}
+        for k, v in vals.items():
+            # defensive clamp (server side) to same ranges
+            lk = k.lower()
+            if lk in RANGES:
+                lo, hi, *_ = RANGES[lk]
+                clamped = float(max(min(v, hi), lo))
+            else:
+                # fallback generic clamp (very wide)
+                clamped = float(v)
+
+            row[k] = clamped
+
         if gender_col:
             row[gender_col] = gender_numeric
         for s in symptom_cols:
             row[s] = 1 if s in st.session_state.selected_symptoms else 0
+
+        # warn user if input(s) were adjusted
+        clamped_msgs = []
+        for k, orig in vals.items():
+            if float(row[k]) != float(orig):
+                clamped_msgs.append(f"{k}: entered {orig} → used {row[k]}")
+        if clamped_msgs:
+            st.warning("Some inputs were adjusted to realistic ranges:\n" + "\n".join(clamped_msgs))
 
         df = pd.DataFrame([row])
         preds, labels, probs = safe_predict(pipeline, le_prognosis, df)
@@ -381,5 +427,6 @@ with right:
                     ax.text(width + 0.02, bar.get_y() + bar.get_height()/2, f"{width:.2f}", va='center', fontsize=10)
                 plt.tight_layout()
                 st.pyplot(fig)
+
 
     st.markdown("</div>", unsafe_allow_html=True)

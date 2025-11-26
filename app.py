@@ -8,6 +8,13 @@ import os
 import base64
 import matplotlib.pyplot as plt
 
+try:
+    import joblib
+except Exception:
+    import streamlit as st
+    st.error("Required package 'joblib' not installed. Add it to requirements.txt and redeploy.")
+    st.stop()
+
 # ---------- Page config ----------
 st.set_page_config(page_title="Disease Predictor", layout="wide", initial_sidebar_state="expanded")
 

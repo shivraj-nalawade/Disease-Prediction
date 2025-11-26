@@ -17,6 +17,33 @@ except Exception:
 
 # ---------- Page config ----------
 st.set_page_config(page_title="Disease Predictor", layout="wide", initial_sidebar_state="expanded")
+# --- FIX CROPPED LABELS GLOBALLY WITHOUT EXTERNAL CSS ---
+st.markdown("""
+<style>
+/* Expand label height for all selectboxes, number inputs, multiselects */
+div[data-baseweb="select"] label,
+div[data-baseweb="input"] label,
+div[data-baseweb="textarea"] label,
+.stSelectbox label,
+.stNumberInput label,
+.stMultiSelect label {
+    white-space: normal !important;
+    height: auto !important;
+    line-height: 1.3 !important;
+    overflow: visible !important;
+    padding-bottom: 6px !important;
+    display: block !important;
+}
+
+/* Fix parent container clipping */
+div[data-baseweb="select"],
+div[data-baseweb="input"],
+div[data-baseweb="textarea"],
+.stSelectbox, .stNumberInput, .stMultiSelect {
+    overflow: visible !important;
+}
+</style>
+""", unsafe_allow_html=True)
 
 # ---------- FILE NAMES ----------
 PIPELINE_FILES = ["disease_prediction_pipeline.pkl"]

@@ -1,4 +1,4 @@
-# 🌡️🩺 Disease Prediction Using Weather Conditions & Symptoms  
+# 🌡️🩺 Smart Health Predictor Using Weather Conditions & Symptoms  
 *A Machine Learning Web Application built with Streamlit*
 
 ---
